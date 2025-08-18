@@ -1,27 +1,22 @@
-# pyproject.toml
-
-[build-system]
-requires      = ["setuptools>=63.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "rpa-dates"
-version = "1.0.0"
+version = "1.0.4"
 description = "Dates actions for RPA"
 readme = "README.md"
 authors = [{ name = "Grzegorz Ziolo", email = "grzegorz.ziolo@gmail.com" }]
 license = { file = "LICENSE" }
-classifiers = [
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-]
-keywords = ["rpa", "dates", "holidays"]
-dependencies = []
-requires-python = ">=3.10"
 
-[project.optional-dependencies]
-dev = ["black", "bumpver", "isort", "pip-tools", "unitest"]
+requires-python = ">=3.10"
+dependencies = [
+    "python-dateutil>=2.9.0.post0",
+    "requests>=2.32.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-mock>=3.14.1",
+]
 
 [project.urls]
 Homepage = "https://github.com/21010/rpa-dates"

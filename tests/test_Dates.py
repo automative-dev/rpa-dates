@@ -1,212 +1,176 @@
-"""
-Test of rpa_dates package.
-"""
-from typing import Any
-import unittest
-import datetime
-from rpa_dates import Dates
+import pytest
+from datetime import datetime, date
+from unittest.mock import Mock
+from src.Dates import Dates
 
-DATES: Dates = Dates()
-DATE_FORMAT = '%d.%m.%Y'
-TODAY = datetime.date.today()
-TOMORROW = TODAY + datetime.timedelta(days=1)
-YESTERDAY = TODAY - datetime.timedelta(days=1)
+# Mock data for Nager API for Poland, 2025
+MOCK_HOLIDAYS_PL_2025 = [
+    {"date": "2025-01-01", "localName": "Nowy Rok", "name": "New Year's Day"},
+    {"date": "2025-01-06", "localName": "Święto Trzech Króli", "name": "Epiphany"},
+    {"date": "2025-04-20", "localName": "Niedziela Wielkanocna", "name": "Easter Sunday"},
+    {"date": "2025-04-21", "localName": "Poniedziałek Wielkanocny", "name": "Easter Monday"},
+    {"date": "2025-05-01", "localName": "Święto Pracy", "name": "Labour Day"},
+    {"date": "2025-05-03", "localName": "Święto Narodowe Trzeciego Maja", "name": "Constitution Day"},
+    {"date": "2025-06-08", "localName": "Zielone Świątki", "name": "Pentecost Sunday"},
+    {"date": "2025-06-19", "localName": "Boże Ciało", "name": "Corpus Christi"},
+    {"date": "2025-08-15", "localName": "Wniebowzięcie Najświętszej Maryi Panny", "name": "Assumption Day"},
+    {"date": "2025-11-01", "localName": "Wszystkich Świętych", "name": "All Saints' Day"},
+    {"date": "2025-11-11", "localName": "Narodowe Święto Niepodległości", "name": "Independence Day"},
+    {"date": "2025-12-25", "localName": "pierwszy dzień Bożego Narodzenia", "name": "Christmas Day"},
+    {"date": "2025-12-26", "localName": "drugi dzień Bożego Narodzenia", "name": "St. Stephen's Day"}
+]
 
-
-class TestDates(unittest.TestCase):
-    def test_new_date(self):
-        test_value = DATES.new_date(11,1,2022)
-        excpected_value = '11.01.2022'
-        self.assertEqual(test_value, excpected_value)
-
-    def test_change_date_format(self):
-        test_value = DATES.change_date_format('11.01.2022', DATE_FORMAT, '%Y.%m.%d')
-        excpected_value = '2022.01.11'
-        self.assertEqual(test_value, excpected_value)
-
-    def test_offset(self):
-        test_value = DATES.offset('01.01.2022', days=1, date_format=DATE_FORMAT, output_format=DATE_FORMAT)
-        excpected_value = '02.01.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        test_value = DATES.offset('01.01.2022', days=-1, date_format=DATE_FORMAT, output_format=DATE_FORMAT)
-        excpected_value = '31.12.2021'
-        self.assertEqual(test_value, excpected_value)
-
-        test_value = DATES.offset('2022-09-12 12:00:00', hours=1, date_format='%Y-%m-%d %H:%M:%S', output_format='%Y-%m-%d %H:%M:%S')
-        excpected_value = '2022-09-12 13:00:00'
-        self.assertEqual(test_value, excpected_value)
-
-        test_value = DATES.offset('2022-09-12 12:00:00', minutes=15, date_format='%Y-%m-%d %H:%M:%S', output_format='%Y-%m-%d %H:%M:%S')
-        excpected_value = '2022-09-12 12:15:00'
-        self.assertEqual(test_value, excpected_value)
-
-        test_value = DATES.offset('2022-09-12 12:00:00', seconds=-1, date_format='%Y-%m-%d %H:%M:%S', output_format='%Y-%m-%d %H:%M:%S')
-        excpected_value = '2022-09-12 11:59:59'
-        self.assertEqual(test_value, excpected_value)
-
-    def test_today(self):
-        test_value = DATES.today(DATE_FORMAT)
-        excpected_value = TODAY.strftime(DATE_FORMAT)
-        self.assertEqual(test_value, excpected_value)
-
-    def test_yesterday(self):
-        test_value = DATES.yesterday(DATE_FORMAT)
-        excpected_value = YESTERDAY.strftime(DATE_FORMAT)
-        self.assertEqual(test_value, excpected_value)
-
-    def test_tomorrow(self):
-        test_value = DATES.tomorrow(DATE_FORMAT)
-        excpected_value = TOMORROW.strftime(DATE_FORMAT)
-        self.assertEqual(test_value, excpected_value)
-
-    def test_next_working_day(self):
-        # Friday
-        test_value = DATES.next_working_day('21.10.2022', '%d.%m.%Y')
-        excpected_value = '24.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Saturday
-        test_value = DATES.next_working_day('22.10.2022', '%d.%m.%Y')
-        excpected_value = '24.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Sunday
-        test_value = DATES.next_working_day('23.10.2022', '%d.%m.%Y')
-        excpected_value = '24.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Monday
-        test_value = DATES.next_working_day('24.10.2022', '%d.%m.%Y')
-        excpected_value = '25.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # 1st day of Christmas - Sunday (next working day (Monday) is a public holiday)
-        test_value = DATES.next_working_day('25.12.2022', '%d.%m.%Y', True, 'PL')
-        excpected_value = '27.12.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Wednesday (next two days are public holidays in Peru and then we have weekend)
-        test_value = DATES.next_working_day('27.07.2022', '%d.%m.%Y', True, 'PE')
-        excpected_value = '01.08.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Friday (next working day (Monday) is a public holiday)
-        test_value = DATES.next_working_day('23.12.2022', '%d.%m.%Y', True, 'PL')
-        excpected_value = '27.12.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Monday (next day (Tuesday) is a public holiday)
-        test_value = DATES.next_working_day('31.10.2022', '%d.%m.%Y', True, 'PL')
-        excpected_value = '02.11.2022'
-        self.assertEqual(test_value, excpected_value)
-
-    def test_previous_working_day(self):
-        # Sunday
-        test_value = DATES.previous_working_day('23.10.2022', '%d.%m.%Y')
-        excpected_value = '21.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Saturday
-        test_value = DATES.previous_working_day('22.10.2022', '%d.%m.%Y')
-        excpected_value = '21.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Friday
-        test_value = DATES.previous_working_day('21.10.2022', '%d.%m.%Y')
-        excpected_value = '20.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Monday
-        test_value = DATES.previous_working_day('24.10.2022', '%d.%m.%Y')
-        excpected_value = '21.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Monday (previous working day (Friday) is a public holiday)
-        test_value = DATES.previous_working_day('14.11.2022', '%d.%m.%Y', True, 'PL')
-        excpected_value = '10.11.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Two previous days are public holidays
-        test_value = DATES.previous_working_day('01.08.2022', '%d.%m.%Y', True, 'PE')
-        excpected_value = '27.07.2022'
-        self.assertEqual(test_value, excpected_value)
-
-        # Previous day is a public holiday
-        test_value = DATES.previous_working_day('02.11.2022', '%d.%m.%Y', True, 'PL')
-        excpected_value = '31.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-    def test_first_day_of_month(self):
-        test_value = DATES.first_day_of_month('12.04.2022', DATE_FORMAT, DATE_FORMAT)
-        excpected_value = '01.04.2022'
-        self.assertEqual(test_value, excpected_value)
-
-    def test_last_day_of_month(self):
-        test_value = DATES.last_day_of_month('12.04.2022', DATE_FORMAT, DATE_FORMAT)
-        excpected_value = '30.04.2022'
-        self.assertEqual(test_value, excpected_value)
-
-    def test_calculate_date_of_day_of_week(self):
-        test_value = DATES.calculate_date_of_weekday('21.10.2022', DATE_FORMAT, 'mon')
-        excpected_value = '17.10.2022'
-        self.assertEqual(test_value, excpected_value)
-
-    def test_day_of_year(self):
-        test_value = DATES.day_of_year('05.01.2022', DATE_FORMAT)
-        excepcted_value = 5
-        self.assertEqual(test_value, excepcted_value)
-
-    def test_week_of_year(self):
-        test_dates: list[dict[str, Any]] = [
-            { 'value': '01.01.2014', 'excpected': 1, 'iso': True },
-            { 'value': '01.01.2022', 'excpected': 52, 'iso': True },
-            { 'value': '01.01.2027', 'excpected': 53, 'iso': True },
-            { 'value': '12.03.2029', 'excpected': 11, 'iso': True },
-            { 'value': '23.10.2022', 'excpected': 42, 'iso': True },
-            { 'value': '01.01.2014', 'excpected': 1, 'iso': False },
-            { 'value': '01.01.2022', 'excpected': 1, 'iso': False },
-            { 'value': '01.01.2027', 'excpected': 1, 'iso': False },
-            { 'value': '12.03.2029', 'excpected': 11, 'iso': False },
-            { 'value': '23.10.2022', 'excpected': 43, 'iso': False }
-        ]
-
-        for date in test_dates:
-            self.assertEqual(DATES.week_of_year(date['value'], DATE_FORMAT, date['iso']), date['excpected'])
-
-    def test_difference_between_dates_in_days(self):
-        test_value = DATES.difference_between_dates(TOMORROW.strftime(DATE_FORMAT), YESTERDAY.strftime(DATE_FORMAT), DATE_FORMAT, 'days')
-        excepcted_value = 2
-        self.assertEqual(test_value, excepcted_value)
-
-    def test_get_fiscal_year(self):
-        test_value = DATES.get_fiscal_year('12.04.2022', DATE_FORMAT, 4)
-        excpected_value = 2023
-        self.assertEqual(test_value, excpected_value)
-
-    def test_get_fiscal_month(self):
-        test_value = DATES.get_fiscal_month('12.04.2022', DATE_FORMAT, 4)
-        excpected_value = 1
-        self.assertEqual(test_value, excpected_value)
-
-    def test_get_holidays(self):
-        test_value = DATES.get_public_holidays('PL', 2022)
-        excpected_value = ['2022-01-01', '2022-01-06', '2022-04-17', '2022-04-18', '2022-05-01', '2022-05-03', '2022-06-05', '2022-06-16', '2022-08-15', '2022-11-01', '2022-11-11', '2022-12-25', '2022-12-26']
-        self.assertEqual(test_value, excpected_value)
+@pytest.fixture
+def mock_requests_get(mocker):
+    """Fixture to mock requests.get for holiday API calls."""
+    mock_response = Mock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = MOCK_HOLIDAYS_PL_2025
     
-    def test_is_holiday(self):
-        test_value: bool = DATES.is_public_holiday('PL', '10.10.2022', DATE_FORMAT)
-        excpected_value = False
-        self.assertEqual(test_value, excpected_value)
+    # Patch requests.get to return our mock response
+    return mocker.patch('requests.get', return_value=mock_response)
 
-        test_value = DATES.is_public_holiday('PL', '01.05.2022', DATE_FORMAT)
-        excpected_value = True
-        self.assertEqual(test_value, excpected_value)
+# --- Test Core & Helper Methods ---
 
-        test_value = DATES.is_public_holiday('PL')
-        excpected_value = False
-        self.assertEqual(test_value, excpected_value)
-        
+def test_to_datetime_conversion():
+    """Tests the internal _to_datetime helper."""
+    dt_obj = datetime(2025, 8, 18)
+    date_obj = date(2025, 8, 18)
+    str_obj = "18.08.2025"
+    
+    assert Dates._to_datetime(dt_obj) == dt_obj
+    assert Dates._to_datetime(date_obj) == dt_obj
+    assert Dates._to_datetime(str_obj) == dt_obj
+    with pytest.raises(TypeError):
+        Dates._to_datetime(12345)
 
-if __name__ == '__main__':
-    unittest.main()
+# --- Test Date Creation and Formatting ---
+
+def test_new_datetime():
+    assert Dates.new_datetime(18, 8, 2025) == "18.08.2025"
+    assert Dates.new_datetime(18, 8, 2025, format='datetime') == datetime(2025, 8, 18)
+    assert Dates.new_datetime(1, 1, 2024, output_format='%Y/%m/%d') == "2024/01/01"
+
+
+def test_change_date_format():
+    assert Dates.change_date_format("2025-08-18", "%Y-%m-%d", "%d/%m/%Y") == "18/08/2025"
+
+
+# --- Test Relative Dates & Offsets ---
+def test_offset():
+    base_date = "15.02.2024"  # A leap year
+    assert Dates.offset(base_date, days=15) == "01.03.2024"
+    assert Dates.offset(base_date, days=-15) == "31.01.2024"
+    assert Dates.offset("31.01.2025", months=1) == "28.02.2025"
+    assert Dates.offset("29.02.2024", years=1, format='datetime') == datetime(2025, 2, 28, 0, 0)
+
+
+def test_today_yesterday_tomorrow(mocker):
+    """Mocks datetime.today to create a deterministic test."""
+    mock_today = datetime(2025, 8, 18, 12, 0, 0)
+    mocker.patch('src.Dates.datetime').today.return_value = mock_today
+
+    assert Dates.today() == "18.08.2025"
+    assert Dates.yesterday() == "17.08.2025"
+    assert Dates.tomorrow(format='datetime') == datetime(2025, 8, 19, 12, 0, 0)
+
+# --- Test Boundary and Property Calculations ---
+
+def test_first_and_last_day_of_month():
+    assert Dates.first_day_of_month("18.08.2025") == "01.08.2025"
+    assert Dates.last_day_of_month("18.08.2025") == "31.08.2025"
+    # Leap year check
+    assert Dates.last_day_of_month("10.02.2024", format='datetime') == datetime(2024, 2, 29)
+    # Non-leap year
+    assert Dates.last_day_of_month("10.02.2025", format='datetime') == datetime(2025, 2, 28)
+
+@pytest.mark.parametrize("date_in, unit, expected", [
+    (("18.08.2025", "28.08.2025"), "days", 10),
+    (("18.08.2025 10:00", "18.08.2025 12:00"), "hours", 2),
+    (("18.08.2025 10:00", "18.08.2025 10:05"), "minutes", 5),
+    (("18.08.2025 10:00:15", "18.08.2025 10:00:45"), "seconds", 30)
+])
+def test_difference_between_dates(date_in, unit, expected):
+    date1, date2 = date_in
+    date_format = '%d.%m.%Y'
+    if ' ' in date1:
+        date_format = '%d.%m.%Y %H:%M' if ':' in date1.split(' ')[1] else '%d.%m.%Y %H'
+        if date1.count(':') == 2:
+            date_format = '%d.%m.%Y %H:%M:%S'
+
+    result = Dates.difference_between_dates(date1, date2, date_format=date_format, unit=unit)
+    assert result == expected
+
+
+def test_day_and_week_of_year():
+    assert Dates.day_of_year("01.01.2025") == 1
+    assert Dates.day_of_year("31.12.2024") == 366 # Leap year
+    assert Dates.week_of_year("01.01.2025") == 1 # Wednesday, week 1
+    assert Dates.week_of_year("18.08.2025") == 34 # Monday, week 34
+
+
+# --- Test Holiday and Working Day Logic (with Mocks) ---
+def test_get_public_holidays(mock_requests_get):
+    holidays_dates = Dates.get_public_holidays("PL", 2025)
+    assert "01.01.2025" in holidays_dates
+    assert "15.08.2025" in holidays_dates
+    assert isinstance(holidays_dates, list)
+
+    holidays_full = Dates.get_public_holidays("PL", 2025, dates_only=False)
+    assert holidays_full["11.11.2025"] == "Independence Day"
+    assert isinstance(holidays_full, dict)
+
+    # Test caching
+    mock_requests_get.reset_mock()
+    Dates.get_public_holidays.cache_clear()
+    Dates.get_public_holidays("PL", 2025)
+    Dates.get_public_holidays("PL", 2025)
+    mock_requests_get.assert_called_once()
+
+
+def test_is_public_holiday(mock_requests_get):
+    assert Dates.is_public_holiday("PL", "15.08.2025") is True
+    assert Dates.is_public_holiday("PL", "18.08.2025") is False
+
+
+def test_next_working_day(mock_requests_get):
+    # Standard cases (no holidays)
+    assert Dates.next_working_day("13.08.2025") == "14.08.2025"  # Wed -> Thu
+    assert Dates.next_working_day(date_input="15.08.2025", country_code="PL") == "18.08.2025"  # Fri(Holiday) -> Mon
+    assert Dates.next_working_day("16.08.2025") == "18.08.2025"  # Sat -> Mon
+
+
+def test_previous_working_day(mock_requests_get):
+    assert Dates.previous_working_day("14.08.2025", country_code="PL") == "13.08.2025"  # Thu -> Wed
+    assert Dates.previous_working_day("18.08.2025", country_code="PL") == "14.08.2025"  # Mon -> Prev Thu because Fri is holiday
+    assert Dates.previous_working_day("17.08.2025", country_code='PL') == "14.08.2025"  # Sun -> Prev Thu
+
+
+def test_nth_working_day_of_month(mock_requests_get):
+    # August 2025: 15th is a holiday (Friday)
+    holidays = Dates.get_public_holidays("PL", 2025)
+
+    assert Dates.nth_working_day_of_month(1, "01.08.2025") == "01.08.2025"
+    assert Dates.nth_working_day_of_month(10, "01.08.2025") == "14.08.2025"
+
+    # With holidays provided
+    assert Dates.nth_working_day_of_month(10, "01.08.2025", holidays=holidays) == "14.08.2025"
+    assert Dates.nth_working_day_of_month(11, "01.08.2025", holidays=holidays) == "18.08.2025" # Skips Fri 15th
+
+    with pytest.raises(ValueError):
+        Dates.nth_working_day_of_month(0, "01.08.2025")
+    with pytest.raises(ValueError):
+        Dates.nth_working_day_of_month(30, "01.08.2025", holidays=holidays)  # Not enough working days
+
+
+def test_working_day_offset(mock_requests_get):
+    holidays = Dates.get_public_holidays("PL", 2025)  # ["15.08.2025", ...]
+
+    # Positive offset
+    assert Dates.working_day_offset(3, "12.08.2025", holidays=holidays) == "18.08.2025"  # Tue + 3 days -> Fri is holiday -> Mon
+
+    # Negative offset
+    assert Dates.working_day_offset(-3, "20.08.2025", holidays=holidays) == "14.08.2025"  # Wed - 3 days -> Fri is holiday -> Thu
+
+    # No offset
+    assert Dates.working_day_offset(0, "18.08.2025") == Dates._to_datetime("18.08.2025")
