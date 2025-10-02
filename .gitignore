@@ -10,11 +10,18 @@
 # VS Code
 /.vscode/
 .vscode
-/__pychache__/
+/__pycache__/
 
 # GitHub
 /.github/
 
 .venv
+.env
+
+**/__pycache__/
+
+.pytest_cache/
 
 uv.lock
+
+**/*.egg-info

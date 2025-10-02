@@ -1,22 +1,42 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=77.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "rpa-dates"
 version = "1.0.4"
 description = "Dates actions for RPA"
 readme = "README.md"
-authors = [{ name = "Grzegorz Ziolo", email = "grzegorz.ziolo@gmail.com" }]
-license = { file = "LICENSE" }
-
 requires-python = ">=3.10"
+license = { file = "LICENSE" } # Reverted to this format for compatibility
+keywords = ["date", "time", "datetime", "rpa", "utility"]
+authors = [
+    { name = "Grzegorz Ziolo", email = "grzegorz.ziolo@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
 dependencies = [
     "python-dateutil>=2.9.0.post0",
-    "requests>=2.32.4",
-]
-
-[dependency-groups]
-dev = [
-    "pytest>=8.4.1",
-    "pytest-mock>=3.14.1",
+    "requests>=2.32.3"
 ]
 
 [project.urls]
 Homepage = "https://github.com/21010/rpa-dates"
+"Bug Tracker" = "https://github.com/21010/rpa-dates/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-mock>=3.12.0"
+]
