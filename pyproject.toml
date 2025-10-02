@@ -32,8 +32,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/21010/rpa-dates"
-"Bug Tracker" = "https://github.com/21010/rpa-dates/issues"
+Homepage = "https://github.com/automative-dev/rpa-dates"
+"Bug Tracker" = "https://github.com/21010/automative-dev/issues"
 
 [project.optional-dependencies]
 dev = [
