@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rpa-dates"
+version = "2.0.0"
+description = "Dates actions for RPA"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "Grzegorz Zioło", email = "grzegorz.ziolo@gmail.com" },
+]
+keywords = ["dates", "datetime", "business-days", "holidays"]
+dependencies = [
+    "requests>=2.31.0",
+    "python-dateutil>=2.8.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.8.0",
+    "ruff>=0.3.0",
+    "types-requests",
+    "types-python-dateutil",
+]
+
+# --- Tool Configurations ---
+
+[tool.hatch.build.targets.wheel]
+packages = ["dates_lib"]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 180
+target-version = "py310"
+
+[tool.pytest.ini_options]
+addopts = "--cov=dates_lib --cov-report=term-missing"
+testpaths = ["tests"]
