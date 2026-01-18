@@ -1,27 +1,27 @@
-# Compiled python modules.
-*.pyc
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Setuptools distribution folder.
-/dist/
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
 
-# Python egg metadata, regenerated from source files by setuptools.
-/*.egg-info
+# Virtual Environments
+.venv/
+env/
+venv/
 
-# VS Code
-/.vscode/
-.vscode
-/__pycache__/
-
-# GitHub
-/.github/
-
-.venv
-.env
-
-**/__pycache__/
-
+# Testing / Coverage
 .pytest_cache/
+.coverage
+htmlcov/
 
-uv.lock
+# Tool specific
+.mypy_cache/
+.ruff_cache/
 
-**/*.egg-info
+# IDE
+.idea
+.vscode

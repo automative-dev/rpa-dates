@@ -1,14 +1,13 @@
 """ Delivers methods to operate with dates and times objects. """
 
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 import calendar
 import requests
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta, date, datetime
 import functools
 
-# Define a clear type alias for date inputs
-DateInput = Union[str, date, datetime, None]
+DateInput = Optional[str | date | datetime]
 
 
 class Dates:
