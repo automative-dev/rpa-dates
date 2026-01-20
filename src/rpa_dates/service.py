@@ -1,12 +1,15 @@
 import calendar
+from functools import lru_cache
+
 from datetime import datetime, date, timedelta
 from typing import Optional, Literal
 from dateutil.relativedelta import relativedelta
 
 from .config import DateConfig
-from .exceptions import DateOperationError
 from .interfaces import HolidayProvider
-from .providers.nager_date import NagerDateV3Provider
+from .factories import ProviderFactory
+from .exceptions import DateOperationError
+
 
 DateInput = str | date | datetime
 
@@ -16,7 +19,7 @@ class DateService:
 
     def __init__(self, config: Optional[DateConfig] = None, holiday_provider: Optional[HolidayProvider] = None):
         self.config = config or DateConfig()
-        self.holiday_provider = holiday_provider or NagerDateV3Provider(self.config.api_timeout_seconds)
+        self.holiday_provider = holiday_provider or ProviderFactory.create_provider(self.config.api_timeout_seconds)
 
     def normalize(self, date_input: DateInput, input_format: Optional[str] = None) -> datetime:
         """
@@ -107,7 +110,7 @@ class DateService:
         dt = self.normalize(date_input)
         return dt + timedelta(days=6 - dt.weekday())
 
-    def fist_day_of_month(self, date_input: DateInput) -> datetime:
+    def first_day_of_month(self, date_input: DateInput) -> datetime:
         """
         Returns the first day of the month for the given date.
 
@@ -184,22 +187,165 @@ class DateService:
                 # Days before the first Monday are Week 0.
                 return int(dt.strftime('%W'))
 
-    def dates_diff(self, first_date: DateInput, second_date: DateInput, unit: Literal['seconds', 'minutes', 'hours', 'days'] = 'days'):
-        ...
+    def dates_diff(self, first_date: DateInput, second_date: DateInput, unit: Literal['seconds', 'minutes', 'hours', 'days'] = 'days') -> int | float:
+        """
+        Calculates the absolute difference between two dates in the specified unit.
 
-    def fiscal_year(self, date_input: DateInput, start_month: int = 4):
-        ...
+        Args:
+            first_date (DateInput): The first date.
+            second_date (DateInput): The second date.
+            unit (Literal['seconds', 'minutes', 'hours', 'days']): The unit to calculate the difference in.
 
-    def fiscal_month(self, date_input: DateInput, start_month: int = 4):
-        ...
+        Returns:
+            int | float: The absolute difference between the two dates in the specified unit.
+        """
+        dt1 = self.normalize(first_date)
+        dt2 = self.normalize(second_date)
 
-    def nth_working_day_of_month(self, n: int, date_input: DateInput, country_code: Optional[str] = None):
-        ...
+        diff = abs(dt1 - dt2)
 
-    def working_day_offset(self, days_offset: int, date_input: DateInput, country_code: Optional[str] = None):
-        ...
+        match unit:
+            case 'hours':
+                return diff.total_seconds() / 3600
+            case 'minutes':
+                return diff.total_seconds() / 60
+            case 'seconds':
+                return diff.total_seconds()
+            case _:
+                return diff.days
 
-    def _get_holiday_set(self, years: list[int], country_code: Optional[str]) -> set[date]:
+    def fiscal_year(self, date_input: DateInput, start_month: int = 4) -> int:
+        """
+        Return the fiscal year for given date.
+
+        Args:
+            date_input (DateInput): The date to get the fiscal year for.
+            start_month (int): The month in which the fiscal year starts. Defaults to 4.
+
+        Returns:
+            int: The fiscal year for the given date.
+        """
+        dt = self.normalize(date_input)
+        return dt.year if dt.month < start_month else dt.year + 1
+
+    def fiscal_month(self, date_input: DateInput, start_month: int = 4) -> int:
+        """
+        Return the fiscal month for given date.
+
+        Args:
+            date_input (DateInput): The date to get the fiscal month for.
+            start_month (int): The month in which the fiscal year starts. Defaults to 4.
+
+        Returns:
+            int: The fiscal month for the given date.
+        """
+        dt = self.normalize(date_input)
+        return (dt.month - start_month + 12) % 12 + 1
+
+    def nth_working_day_of_month(self, n: int, date_input: DateInput, country_code: Optional[str] = None) -> datetime:
+        """
+        Returns the nth working day of the month.
+
+        Args:
+            n (int): The day number.
+            date_input (DateInput): The date to get the nth working day for.
+            country_code (Optional[str]): The country code for which to get the nth working day for.
+
+        Returns:
+            datetime: The nth working day of the month.
+        """
+        # Validate input parameters
+        if n <= 0:
+            raise ValueError("Day 'n' must be a positive integer.")
+
+        # Get a list of working days in the month
+        working_days = self.get_working_days_in_month(date_input, country_code)
+
+        # Check if there are enough working days in the month for the requested day number
+        if n > len(working_days):
+            raise ValueError(f"Month has fewer than {n} working days.")
+
+        # Return the nth working day of the month
+        return working_days[n - 1]
+
+    def working_day_offset(self, days_offset: int, date_input: DateInput, country_code: Optional[str] = None) -> datetime:
+        """
+        Calculates a date by offsetting a number of working days.
+
+        Args:
+            days_offset (int): The number of working days to offset.
+            date_input (DateInput): The date to offset.
+            country_code: Optional[str] = None
+
+        Returns:
+            datetime: The new datetime object after applying the offset.
+        """
+        dt = self.normalize(date_input)
+
+        # Return immediately for 0 offset
+        if days_offset == 0:
+            return dt
+
+        step = 1 if days_offset > 0 else -1
+        days_remaining = abs(days_offset)
+
+        # Initialize the current date to the input date
+        current = dt
+
+        # Track the currently loaded holiday year to avoid re-fetching unnecessarily
+        get_comp_date = lambda d: d.date() if isinstance(d, datetime) else d
+
+        current_comp_date = get_comp_date(current)
+        loaded_year = current_comp_date.year
+
+        # Load initial holidays
+        holidays = self._get_holiday_set((loaded_year,), country_code) if country_code else set()
+
+        while days_remaining > 0:
+            current += timedelta(days=step)
+            check_date = get_comp_date(current)
+
+            # If we crossed into a new year, update the holiday set
+            if country_code and check_date.year != loaded_year:
+                loaded_year = check_date.year
+                holidays = self._get_holiday_set((loaded_year,), country_code)
+
+            # Check: Weekday (0-4) AND not a holiday
+            if check_date.weekday() < 5 and (not country_code or check_date not in holidays):
+                days_remaining -= 1
+
+        return current
+
+    def get_working_days_in_month(self, date_input: DateInput, country_code: Optional[str] = None) -> list[datetime]:
+        """
+        Returns a list of working days in the month.
+
+        Args:
+            date_input (DateInput): The date to get the working days for.
+            country_code (Optional[str]): The country code for which to get the working days for.
+
+        Returns:
+            list[datetime]: A list of working days in the month.
+        """
+        # Normalize the date
+        dt = self.normalize(date_input)
+
+        # Fetch holidays for relevant years to cover the range of `days`
+        holidays = self._get_holiday_set((dt.year,), country_code) if country_code else set()
+
+        # Get the number of days in the month
+        _, days_in_month = calendar.monthrange(dt.year, dt.month)
+
+        # Create a list of all days in the month
+        all_days = (dt.replace(day=day) for day in range(1, days_in_month + 1))
+
+        # Filter out weekends and holidays from the list of all days in the month
+        working_days = [day for day in all_days if day.weekday() < 5 and day.date() not in holidays]
+
+        return working_days
+
+    @lru_cache(maxsize=32)
+    def _get_holiday_set(self, years: tuple[int], country_code: Optional[str]) -> set[date]:
         """
         Internal helper to retrieve a set of holiday dates for the specified years and country.
 
@@ -218,37 +364,31 @@ class DateService:
             holidays.update(self.holiday_provider.get_holidays(year, country_code))
         return holidays
 
-    def add_working_days(self, date_input: DateInput, days: int, country_code: Optional[str] = None) -> datetime:
+    def public_holidays(self, years: list[int], country_code: str) -> set[date]:
         """
-        Adds the specified number of working days to the given date.
+        Return holidays for given year and country. Results are cached.
+        List of countries: https://date.nager.at/Country
 
         Args:
-            date_input (DateInput): The date to add working days to.
-            days (int): The number of working days to add.
             country_code (str): The country code in the format specified by the provider.
+            years (list[int]): A list of years
+
+        Returns:
+            set[date]: A set of holiday dates.
         """
-        if days == 0:
-            return self.normalize(date_input)
+        return self._get_holiday_set(tuple(years), country_code)
 
+    def is_public_holiday(self, date_input: DateInput, country_code: str) -> bool:
+        """
+        Check if a given date is a public holiday in the specified country.
+
+        Args:
+            date_input (DateInput): The date to check.
+            country_code (str): The country code in the format specified by the provider.
+
+        Returns:
+            bool: True if the date is a public holiday, False otherwise.
+        """
         dt = self.normalize(date_input)
-
-        # Fetch holidays for relevant years to cover the range of `days`
-        # A rough estimate: 200 working days per year. Add 2 for buffer.
-        required_years = list(range(dt.year, dt.year + (days // 200) + 2))
-        holidays = self._get_holiday_set(required_years, country_code)
-
-        step = 1 if days > 0 else -1
-        days_remaining = abs(days)
-        current = dt
-
-        while days_remaining > 0:
-            current += timedelta(days=step)
-            if current.weekday() < 5 and current.date() not in holidays:
-                days_remaining -= 1
-        return current
-
-    def public_holidays(self, country_code: str, years: list[int]):
-        ...
-
-    def is_public_holiday(self, country_code: str, date_input: DateInput):
-        ...
+        holidays = self._get_holiday_set((dt.year,), country_code)
+        return dt.date() in holidays

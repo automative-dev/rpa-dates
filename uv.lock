@@ -226,6 +226,18 @@ wheels = [
 ]
 
 [[package]]
+name = "holidays"
+version = "0.89"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-dateutil" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/86/7b/4edaf587b45eb5f59d791d1c88255fdaef6010119dd14683c827ad65bd12/holidays-0.89.tar.gz", hash = "sha256:9e7a08d9a704382be0ce70d148087aae95da51c0e77d73b4f8f1a17bdc3729bf", size = 829350, upload-time = "2026-01-19T20:01:14.484Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/84/854304ac830642625a050047096fdc9697c7e09c3645588aeb723488fc01/holidays-0.89-py3-none-any.whl", hash = "sha256:b132a10e8a112d97c17df042b2421c0e7a35f50e2f55975fceb4bd465bb6c658", size = 1348788, upload-time = "2026-01-19T20:01:12.889Z" },
+]
+
+[[package]]
 name = "idna"
 version = "3.11"
 source = { registry = "https://pypi.org/simple" }
@@ -471,11 +483,13 @@ name = "rpa-dates"
 version = "2.0.0"
 source = { editable = "." }
 dependencies = [
+    { name = "holidays" },
+    { name = "pytest" },
     { name = "python-dateutil" },
     { name = "requests" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "mypy" },
     { name = "pytest" },
@@ -487,16 +501,21 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
+    { name = "holidays", specifier = ">=0.89" },
+    { name = "pytest", specifier = ">=9.0.2" },
     { name = "python-dateutil", specifier = ">=2.8.2" },
     { name = "requests", specifier = ">=2.31.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3.0" },
-    { name = "types-python-dateutil", marker = "extra == 'dev'" },
-    { name = "types-requests", marker = "extra == 'dev'" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = ">=1.8.0" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-cov", specifier = ">=4.1.0" },
+    { name = "ruff", specifier = ">=0.3.0" },
+    { name = "types-python-dateutil" },
+    { name = "types-requests" },
+]
 
 [[package]]
 name = "ruff"

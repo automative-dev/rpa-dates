@@ -2,16 +2,16 @@ import functools
 import requests
 from datetime import datetime, date
 
-from ..interfaces import HolidayProvider
-from ..exceptions import HolidayApiError
+from rpa_dates.interfaces import HolidayProvider
+from rpa_dates.exceptions import HolidayApiError
 
 
-class NagerDateV3Provider(HolidayProvider):
+class NagerDateV4Provider(HolidayProvider):
     """
     This provider fetches public holidays from the Nager.Date API v3.
     It caches results to avoid redundant API calls for the same year and country code.
     """
-    _API_URL = 'https://date.nager.at/api/v3/PublicHolidays/{year}/{country_code}'
+    _API_URL = 'https://date.nager.at/api/v4/PublicHolidays/{year}/{country_code}'
 
     def __init__(self, timeout: int = 10):
         self.timeout = timeout
