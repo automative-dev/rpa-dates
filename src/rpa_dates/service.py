@@ -63,7 +63,7 @@ class DateService:
         fmt = output_format or self.config.default_output_format
         return dt.strftime(fmt)
 
-    def offset(self, date_input: DateInput, seconds=0, minutes=0, hours=0, days=0, weeks=0, months=0, years=0) -> datetime:
+    def offset(self, date_input: DateInput, seconds: int = 0, minutes: int = 0, hours: int = 0, days: int = 0, weeks: int = 0, months: int = 0, years: int = 0) -> datetime:
         """
         Applies an offset of days, months, or years to a date.
 
@@ -292,7 +292,7 @@ class DateService:
         current = dt
 
         # Track the currently loaded holiday year to avoid re-fetching unnecessarily
-        def get_comp_date(d: DateInput):
+        def get_comp_date(d: datetime | date) -> datetime | date:
             return d.date() if isinstance(d, datetime) else d
 
         current_comp_date = get_comp_date(current)

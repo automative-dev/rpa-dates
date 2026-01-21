@@ -39,6 +39,11 @@ packages = ["src/rpa_dates"]
 strict = true
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+
 [tool.ruff]
 line-length = 180
 target-version = "py310"
