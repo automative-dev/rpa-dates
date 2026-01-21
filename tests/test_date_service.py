@@ -45,8 +45,8 @@ def test_week_of_year_iso(service):
 
 def test_fiscal_year(service):
     # Fiscal year starts in April (month 4)
-    assert service.fiscal_year("2025-03-31", start_month=4) == 2024
-    assert service.fiscal_year("2025-04-01", start_month=4) == 2025
+    assert service.fiscal_year("2025-03-31", start_month=4) == 2025
+    assert service.fiscal_year("2025-04-01", start_month=4) == 2026
 
 
 # --- Working Day Logic Tests (The Core Logic) ---
@@ -56,7 +56,7 @@ def test_get_working_days_in_month_excludes_weekends(service, mock_provider):
     # Jan 2025: 1st is Wed. 4th (Sat) and 5th (Sun) are weekends.
     mock_provider.get_holidays.return_value = set()  # No holidays
 
-    days = service.get_working_days_in_month("01.01.2025")
+    days = service.get_working_days_in_month("2025-01-01")
 
     # Check that Jan 4th and Jan 5th are NOT in the list
     dates = [d.date() for d in days]

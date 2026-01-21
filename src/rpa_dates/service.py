@@ -43,9 +43,9 @@ class DateService:
         if isinstance(date_input, date):
             return datetime.combine(date_input, datetime.min.time())
         if isinstance(date_input, str):
-            format = input_format or self.config.default_input_format
+            input_format = input_format or self.config.default_input_format
             try:
-                return datetime.strptime(date_input, format)
+                return datetime.strptime(date_input, input_format)
             except ValueError as e:
                 raise DateOperationError(f"Could not parse '{date_input}' with format '{format}'") from e
         raise TypeError(f"Unsupported type: {type(date_input)}")

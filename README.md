@@ -1,138 +1,136 @@
-# rpa-dates
+# RPA Dates 2.0
 
-A straightforward and powerful Python utility library for common date and time operations, especially useful in RPA (Robotic Process Automation) and general scripting.
+**A robust, fault-tolerant Python library for date calculations in Robotic Process Automation (RPA).**
+
+`rpa-dates` simplifies complex date arithmetic—especially regarding working days and holidays—ensuring your automation bots never crash due to unexpected calendar edge cases or API outages.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Code Style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/yourusername/rpa-dates/main.yml?logo=github)](https://github.com/yourusername/rpa-dates/actions)
 
 ## Key Features
 
-* **Date Manipulation**: Easily add or subtract days, months, and years.  
-* **Business Day Calculations**: Find the next/previous working day, the nth working day of a month, or offset by a number of business days.  
-* **Public Holiday Integration**: Fetch public holidays for any country and factor them into business day calculations.  
-* **Date Information**: Get the first/last day of the month, week/day of the year, fiscal periods, and more.  
-* **Flexible Inputs/Outputs**: Accepts strings, date, and datetime objects. Returns formatted strings or datetime objects.  
-* **Time Differences**: Calculate the difference between two dates in days, hours, minutes, or seconds.
+* **Resilient Holiday Fetching**: Uses a "Chain of Responsibility" fallback strategy.
+    1.  **Local Library** (0ms latency, works offline).
+    2.  **Nager.Date API** (Primary Web API).
+    3.  **OpenHolidays API** (Backup Web API).
+    * *If one fails, the next one takes over automatically.*
+* **Production-Grade Working Day Logic**:
+    * Correctly handles **year boundaries** (e.g., adding 5 working days to Dec 29th).
+    * Preserves time components (e.g., `14:30` remains `14:30`).
+    * Supports positive and negative offsets.
+* **RPA-Friendly**: Designed to handle string, `date`, and `datetime` inputs interchangeably.
+* **Fiscal Year Support**: Built-in utilities for fiscal calendars.
 
 ## Installation
 
-Install the package from PyPI using pip:  
+Install using `uv` (recommended) or `pip`:
 
 ```bash
+uv add rpa-dates
+# OR
 pip install rpa-dates
 ```
 
-## Quickstart & Usage Examples
+## Quick Start
 
-All methods are available as static methods on the Dates class.
+### Basic Date Operations
 
-### Basic Setup
+The DateService accepts `strings`, `dates`, or `datetimes` and normalizes them automatically.
 
-```Python
-from rpa_dates import Dates  
-from datetime import date
+```python
+from rpa_dates import DateService
+
+ds = DateService()
+
+# Normalizes inputs automatically
+dt = ds.normalize("11.02.2025")  # Returns datetime object
+
+# Easy offsets
+future_date = ds.offset("01.01.2025", days=10, months=1)
+print(future_date)  # 11.02.2025
 ```
 
-> All methods are static, no need to instantiate the class.
+### Working with Business Days
 
-### Date Offsetting
+Calculate deadlines accurately by skipping weekends and public holidays.
 
-Easily add or subtract time from any given date. If no date is provided, it defaults to today.  
+```python
+# Calculate +5 working days from a Friday
+# Skips Sat, Sun, and any public holidays found for the country (e.g., 'US')
+deadline = ds.working_day_offset(5, "2025-07-03", country_code="US")
 
-```Python
-# Get the date 3 months and 15 days from now
-future_date = Dates.offset(date_input=None, months=3, days=15)  
-print(f"In 3 months and 15 days: {future_date}")
-
-# Get the date 2 years ago from a specific date  
-past_date = Dates.offset(date_input="15.07.2024", years=-2, format='datetime')  
-print(f"Two years before 15.07.2024: {past_date.strftime('%d-%m-%Y')}")
+print(deadline)
+# If July 4th is a holiday, this correctly skips it!
 ```
 
-### Working with Business Days (including Holidays)
+### Finding the Nth Working Day
 
-The library can skip weekends and public holidays. It uses the [Nager.Date API](https://date.nager.at) for holiday data.  
+Perfect for "Report is due on the 3rd working day of the month" scenarios.
 
-```Python
-# Find the next working day in Poland, skipping weekends and public holidays  
-# Assuming "10.11.2023" is a Friday. Next working day would be Monday 13.11.2023  
-next_business_day = Dates.next_working_day(date_input="10.11.2023", country_code="PL")  
-print(f"Next working day in Poland after 10.11.2023 is: {next_business_day}")
+```python
+# Get the 3rd working day of January 2025 in Poland (PL)
+report_date = ds.nth_working_day_of_month(3, "2025-01-01", country_code="PL")
 
-# Find the 10th working day of the current month  
-tenth_working_day = Dates.nth_working_day_of_month(n=10)  
-print(f"10th working day of this month: {tenth_working_day}")
-
-# Find the date 5 working days from today  
-future_working_day = Dates.working_day_offset(days_offset=5)  
-print(f"5 working days from now: {future_working_day}")
+print(report_date)
+# 2025-01-01 is New Year (Holiday) -> Skip
+# 2025-01-02 (Thu) -> 1st WD
+# 2025-01-03 (Fri) -> 2nd WD
+# 2025-01-04 (Sat) -> Skip
+# 2025-01-05 (Sun) -> Skip
+# 2025-01-06 (Mon) is Epiphany (Holiday) -> Skip
+# 2025-01-07 (Tue) -> 3rd WD (Result)
 ```
 
-### Month and Week Calculations
+## Configuration
 
-```Python
-# Get the first and last day of the current month  
-first_day = Dates.first_day_of_month()  
-last_day = Dates.last_day_of_month()  
-print(f"This month runs from {first_day} to {last_day}")
+You can customize the service behavior using DateConfig.
 
-# What date is Friday of the week containing "18.03.2024" (a Monday)?  
-friday_date = Dates.calculate_date_of_weekday(date_input="18.03.2024", week_day='fri')  
-print(f"Friday of that week is: {friday_date}")
+```python
+from rpa_dates import DateService, DateConfig
+
+config = DateConfig(
+    default_input_format='%Y-%m-%d',
+    fiscal_year_start_month=10,  # e.g., US Government fiscal year
+    api_timeout_seconds=5
+)
+
+ds = DateService(config=config)
 ```
 
-### Date Information and Differences
+## Architecture: The Provider Fallback
 
-```Python
-# Get the day and week number of the year  
-day_num = Dates.day_of_year()  
-week_num = Dates.week_of_year()  
-print(f"Today is day number {day_num} in week {week_num} of the year.")
+The library guarantees high availability for holiday data using a multi-provider strategy.
 
-# Calculate the difference in hours between two dates  
-diff_hours = Dates.difference_between_dates(  
-    first_date="01.01.2024 10:00:00",  
-    second_date="02.01.2024 12:00:00",  
-    date_format='%d.%m.%Y %H:%M:%S',  
-    unit='hours'  
-)  
-print(f"Difference is {diff_hours} hours.")
-```
+* LocalPythonHolidayProvider: Checks the local holidays Python package. Fast and offline.
+* NagerDateV3Provider: Queries date.nager.at.
+* NagerDateV4Provider: Queries the newer V4 API.
+* OpenHolidaysProvider: Queries openholidaysapi.org.
 
-## API Reference
+You don't need to configure this; it happens automatically inside ProviderFactory.
 
-The Dates class provides a comprehensive set of static methods for date operations.
+## Contributing
 
-| Method | Description |
-| :---- | :---- |
-| new\_datetime() | Creates a new date object from individual components (year, month, day, etc.). |
-| convert\_to\_datetime() | Converts a date string to a datetime object. |
-| change\_date\_format() | Converts a date string from one format to another. |
-| offset() | Applies an offset of days, months, or years to a date. |
-| today() | Returns today's date. |
-| yesterday() | Returns yesterday's date. |
-| tomorrow() | Returns tomorrow's date. |
-| next\_working\_day() | Finds the next business day, skipping weekends and optional holidays. |
-| previous\_working\_day() | Finds the previous business day, skipping weekends and optional holidays. |
-| first\_day\_of\_month() | Returns the first day of the month for a given date. |
-| last\_day\_of\_month() | Returns the last day of the month for a given date. |
-| calculate\_date\_of\_weekday() | Finds the date of a specific weekday (e.g., 'fri') within the same week. |
-| day\_of\_year() | Returns the day number of the year (1-366). |
-| week\_of\_year() | Returns the week number of the year. |
-| difference\_between\_dates() | Calculates the absolute difference between two dates in a specified unit. |
-| get\_fiscal\_year() | Calculates the fiscal year based on a custom start month. |
-| get\_fiscal\_month() | Calculates the fiscal month based on a custom start month. |
-| get\_public\_holidays() | Fetches public holidays for a given country and year. |
-| is\_public\_holiday() | Checks if a specific date is a public holiday. |
-| nth\_working\_day\_of\_month() | Finds the Nth working day of a given month. |
-| working\_day\_offset() | Calculates a new date by adding or subtracting a number of working days. |
+I use `uv` for dependency management.
 
-## **Dependencies**
+1. Clone the repo:
+    ```bash
+    git clone [https://github.com/21010/rpa-dates.git](https://github.com/21010/rpa-dates.git)
+    cd rpa-dates
+    ```
+   
+2. Install dependencies:
+    ```bash
+    uv sync
+    ```
+   
+3. Run Tests:
+    ```bash
+    uv run pytest
+    ```
+## License
 
-* [python-dateutil](https://pypi.org/project/python-dateutil/)  
-* [requests](https://pypi.org/project/requests/)
-
-## **Contributing**
-
-Contributions, issues, and feature requests are welcome\! Please feel free to check the [issues page](https://github.com/21010/automative-dev/issues).
-
-## **License**
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
