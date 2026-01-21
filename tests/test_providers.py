@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch
 from datetime import date
-from requests.exceptions import Timeout, HTTPError
+from requests.exceptions import Timeout
 
 from rpa_dates.providers.fallback import FallbackHolidayProvider
 from rpa_dates.providers.nager_date_v3 import NagerDateV3Provider
