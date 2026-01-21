@@ -293,7 +293,8 @@ class DateService:
         current = dt
 
         # Track the currently loaded holiday year to avoid re-fetching unnecessarily
-        get_comp_date = lambda d: d.date() if isinstance(d, datetime) else d
+        def get_comp_date(d: DateInput):
+            return d.date() if isinstance(d, datetime) else d
 
         current_comp_date = get_comp_date(current)
         loaded_year = current_comp_date.year
