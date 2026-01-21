@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock
 from rpa_dates.service import DateService
 from rpa_dates.interfaces import HolidayProvider
-from rpa_dates.config import  DateConfig
+from rpa_dates.config import DateConfig
 
 
 # --- Fixtures ---
@@ -10,10 +10,11 @@ from rpa_dates.config import  DateConfig
 def date_config():
     return DateConfig(
         api_timeout_seconds=5,
-        default_input_format='%Y-%m-%d',
-        default_output_format='%d.%m.%Y',
+        default_input_format="%Y-%m-%d",
+        default_output_format="%d.%m.%Y",
         fiscal_year_start_month=4,
     )
+
 
 @pytest.fixture
 def mock_provider():

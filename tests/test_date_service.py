@@ -4,11 +4,15 @@ from rpa_dates.exceptions import DateOperationError
 
 # --- Normalization Tests ---
 
-@pytest.mark.parametrize("input_date, expected_str", [
-    ("2025-01-01", "2025-01-01"),
-    (date(2025, 1, 1), "2025-01-01"),
-    (datetime(2025, 1, 1, 12, 0, 0), "2025-01-01"),
-])
+
+@pytest.mark.parametrize(
+    "input_date, expected_str",
+    [
+        ("2025-01-01", "2025-01-01"),
+        (date(2025, 1, 1), "2025-01-01"),
+        (datetime(2025, 1, 1, 12, 0, 0), "2025-01-01"),
+    ],
+)
 def test_normalize_valid_inputs(service, input_date, expected_str):
     """Test normalization of string, date, and datetime inputs."""
     result = service.normalize(input_date, input_format="%Y-%m-%d")
@@ -32,6 +36,7 @@ def test_normalize_invalid_string(service):
 
 # --- Basic Date Logic Tests ---
 
+
 def test_first_last_day_of_month(service):
     dt = date(2025, 2, 15)  # Feb 2025
     assert service.first_day_of_month(dt).day == 1
@@ -50,6 +55,7 @@ def test_fiscal_year(service):
 
 
 # --- Working Day Logic Tests (The Core Logic) ---
+
 
 def test_get_working_days_in_month_excludes_weekends(service, mock_provider):
     """Verify weekends are automatically excluded."""
@@ -104,6 +110,7 @@ def test_nth_working_day_out_of_bounds(service):
 
 
 # --- Complex Offset Logic (Year Boundary) ---
+
 
 def test_working_day_offset_simple(service, mock_provider):
     """Test simple offset within the same week."""
@@ -168,6 +175,7 @@ def test_working_day_offset_zero(service):
 
 
 # --- Caching & Types Tests ---
+
 
 def test_public_holidays_caching_call_structure(service, mock_provider):
     """

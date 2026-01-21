@@ -9,7 +9,7 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Code Style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/yourusername/rpa-dates/main.yml?logo=github)](https://github.com/yourusername/rpa-dates/actions)
+[![Build Status](https://github.com/21010/rpa-dates/actions/workflows/ci.yml/badge.svg)](https://github.com/21010/rpa-dates/actions/workflows/ci.yml)
 
 ## Key Features
 

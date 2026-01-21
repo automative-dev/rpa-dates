@@ -1,21 +1,20 @@
 import calendar
+from datetime import date, datetime, timedelta
 from functools import lru_cache
+from typing import Literal, Optional
 
-from datetime import datetime, date, timedelta
-from typing import Optional, Literal
 from dateutil.relativedelta import relativedelta
 
 from .config import DateConfig
-from .interfaces import HolidayProvider
-from .factories import ProviderFactory
 from .exceptions import DateOperationError
-
+from .factories import ProviderFactory
+from .interfaces import HolidayProvider
 
 DateInput = str | date | datetime
 
 
 class DateService:
-    WEEK_DAYS = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}
+    WEEK_DAYS = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6}
 
     def __init__(self, config: Optional[DateConfig] = None, holiday_provider: Optional[HolidayProvider] = None):
         self.config = config or DateConfig()
@@ -164,13 +163,13 @@ class DateService:
         dt = self.normalize(date_input)
         return dt.timetuple().tm_yday
 
-    def week_of_year(self, date_input: DateInput, standard: Literal['iso', 'us', None] = None) -> int:
+    def week_of_year(self, date_input: DateInput, standard: Literal["iso", "us", None] = None) -> int:
         dt = self.normalize(date_input)
         match standard:
-            case 'iso':
+            case "iso":
                 # ISO 8601 week number (first week of the year contains Thursday)
                 return dt.isocalendar().week
-            case 'us':
+            case "us":
                 # US Standard: Week 1 contains Jan 1, weeks start Sunday.
                 # Logic: Calculate offset based on which day of week Jan 1 falls on.
                 jan1 = dt.replace(month=1, day=1)
@@ -185,9 +184,9 @@ class DateService:
                 # Default/Fallback (Unix standard)
                 # %W: Week starts Monday. First week starting on Mon is Week 1.
                 # Days before the first Monday are Week 0.
-                return int(dt.strftime('%W'))
+                return int(dt.strftime("%W"))
 
-    def dates_diff(self, first_date: DateInput, second_date: DateInput, unit: Literal['seconds', 'minutes', 'hours', 'days'] = 'days') -> int | float:
+    def dates_diff(self, first_date: DateInput, second_date: DateInput, unit: Literal["seconds", "minutes", "hours", "days"] = "days") -> int | float:
         """
         Calculates the absolute difference between two dates in the specified unit.
 
@@ -205,11 +204,11 @@ class DateService:
         diff = abs(dt1 - dt2)
 
         match unit:
-            case 'hours':
+            case "hours":
                 return diff.total_seconds() / 3600
-            case 'minutes':
+            case "minutes":
                 return diff.total_seconds() / 60
-            case 'seconds':
+            case "seconds":
                 return diff.total_seconds()
             case _:
                 return diff.days

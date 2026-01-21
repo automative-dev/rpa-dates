@@ -11,19 +11,15 @@ class OpenHolidaysProvider(HolidayProvider):
     This provider fetches public holidays from the OpenHolidays API.
     It maps the 'year' request to a full-year date range (Jan 1 - Dec 31).
     """
-    _API_URL = 'https://openholidaysapi.org/PublicHolidays'
+
+    _API_URL = "https://openholidaysapi.org/PublicHolidays"
 
     def __init__(self, timeout: int = 10):
         self.timeout = timeout
 
     @functools.lru_cache(maxsize=64)
     def get_holidays(self, year: int, country_code: str) -> set[date]:
-        params = {
-            "countryIsoCode": country_code,
-            "languageIsoCode": "EN",
-            "validFrom": f"{year}-01-01",
-            "validTo": f"{year}-12-31"
-        }
+        params = {"countryIsoCode": country_code, "languageIsoCode": "EN", "validFrom": f"{year}-01-01", "validTo": f"{year}-12-31"}
 
         try:
             response = requests.get(self._API_URL, params=params, timeout=self.timeout)
@@ -31,10 +27,7 @@ class OpenHolidaysProvider(HolidayProvider):
 
             data = response.json()
 
-            return {
-                datetime.strptime(item['startDate'], '%Y-%m-%d').date()
-                for item in data
-            }
+            return {datetime.strptime(item["startDate"], "%Y-%m-%d").date() for item in data}
 
         except requests.RequestException as e:
             # Catch connection errors, timeouts, or HTTP errors (4xx/5xx)
